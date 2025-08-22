@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: transparent; /* 背景为透明 */
+            margin: 0;
+            padding: 1rem;
+        }
+
+        /* 照片墙容器 - 使用 CSS Columns 实现瀑布流 */
+        .photo-wall-container {
+            column-count: 4; /* 默认4列 */
+            column-gap: 25px; /* 列间距 */
+        }
+
+        /* 单张照片项目 */
+        .photo-item {
+            display: inline-block; /* 瀑布流的关键属性 */
+            width: 100%;
+            break-inside: avoid; /* 防止元素在跨列时被截断 */
+            margin-bottom: 25px; /* 图片之间的垂直间距 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px; /* 给图片本身加一点圆角 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 给图片加阴影，替代相框 */
+        }
+
+        /* 鼠标悬停效果 */
+        .photo-item:hover {
+            transform: translateY(-8px) scale(1.05) rotate(0deg) !important;
+            z-index: 10;
+            position: relative;
+        }
+        
+        /* 响应式调整列数 */
+        @media (max-width: 1200px) {
+            .photo-wall-container { column-count: 3; }
+        }
+        @media (max-width: 800px) {
+            .photo-wall-container { column-count: 2; }
+        }
+        @media (max-width: 500px) {
+            .photo-wall-container { column-count: 1; }
+        }
+
+        /* 灯箱 (Modal) 样式 - 保持不变 */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.4s ease;
+        }
+        .modal.show { opacity: 1; }
+        .modal-content { max-width: 85%; max-height: 85vh; animation: zoomIn 0.4s ease; }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .close { position: absolute; top: 20px; right: 35px; color: #fff; font-size: 40px;
+            font-weight: bold; transition: color 0.3s; cursor: pointer; }
+        .close:hover, .close:focus { color: #bbb; }
+    </style>
+</head>
+<body>
+    <div class="photo-wall-container" id="photo-wall">
+        </div>
+
+    <div id="myModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoWall = document.getElementById('photo-wall');
+            const modal = document.getElementById('myModal');
+            const modalImg = document.getElementById('modalImage');
+            const closeBtn = document.querySelector('.close');
+            
+            const photos = [
+                { src: 'image1.png' }, { src: 'image2.png' },
+                { src: 'image3.png' }, { src: 'image4.png' },
+                { src: 'image5.png' }, { src: 'image6.png' },
+                { src: 'image7.png' }, { src: 'image8.png' },
+                { src: 'image9.png' }, { src: 'image10.png' }
+            ];
+            
+            const imageLoadPromises = [];
+
+            photos.forEach(photo => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                const img = document.createElement('img');
+                img.src = photo.src;
+                img.alt = '照片';
+                
+                const promise = new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = () => {
+                        img.src='https://placehold.co/400x300/ccc/333?text=图片加载失败';
+                        resolve(); // 失败也要 resolve
+                    };
+                });
+                imageLoadPromises.push(promise);
+                
+                photoItem.appendChild(img);
+                
+                const randomRotation = Math.random() * 8 - 4; // 减小旋转角度
+                photoItem.style.transform = `rotate(${randomRotation}deg)`;
+                
+                photoItem.addEventListener('click', function() {
+                    modal.style.display = 'flex';
+                    modalImg.src = img.src;
+                    setTimeout(() => modal.classList.add('show'), 10);
+                });
+
+                photoWall.appendChild(photoItem);
+            });
+
+            function closeModal() {
+                modal.classList.remove('show');
+                setTimeout(() => modal.style.display = 'none', 400);
+            }
+
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            // ======================================================
+            // ▼▼▼ [已修复] 使用 ResizeObserver 和防抖逻辑来发送高度 ▼▼▼
+            // ======================================================
+
+            // 创建一个变量来“记忆”上次发送的高度
+            let lastSentHeight = 0;
+
+            // 创建一个智能的、可复用的发送函数
+            const sendHeight = () => {
+                // 使用 scrollHeight 来获取包含所有内容的总高度
+                const currentHeight = document.documentElement.scrollHeight;
+
+                // 只有当高度变化超过2像素时才发送，有效避免无限循环
+                if (Math.abs(currentHeight - lastSentHeight) > 2) {
+                    window.parent.postMessage({ type: 'iframeHeight', height: currentHeight }, '*');
+                    // 发送后，立刻更新“记忆”
+                    lastSentHeight = currentHeight;
+                }
+            };
+
+            // 等待所有图片都加载完成
+            Promise.all(imageLoadPromises).then(() => {
+                // 1. 立即发送一次初始高度
+                sendHeight();
+
+                // 2. 创建一个 ResizeObserver 来监视 body 内容尺寸的变化
+                const observer = new ResizeObserver(() => {
+                    // 当内容尺寸变化时（例如窗口缩放导致列数变化），调用我们的智能发送函数
+                    sendHeight();
+                });
+
+                // 3. 让 observer 开始监视 body 元素
+                observer.observe(document.body);
+            });
+            // ======================================================
+            // ▲▲▲ 修复完成 ▲▲▲
+            // ======================================================
+        });
+    </script>
+</body>
+</html>
