@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无限滚动照片墙</title>
+    <style>
+        /* CSS 部分 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            background-color: transparent; /* 设置背景为透明 */
+        }
+
+        /* 照片画廊容器 */
+        .gallery {
+            display: flex;
+            gap: 1.5vw;
+            width: 90%;
+            max-width: 1200px;
+            height: 100%;
+        }
+
+        /* 每一列照片 */
+        .gallery_line {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5vw;
+            height: fit-content;
+            /* 应用滚动动画 */
+            animation: slide 30s linear infinite;
+        }
+
+        /* 第二列和第四列照片反向滚动 */
+        .gallery_line:nth-child(2),
+        .gallery_line:nth-child(4) {
+            animation-direction: reverse;
+        }
+
+        .gallery_line img {
+            flex: 1 1 auto;
+            width: 100%;
+            object-fit: cover;
+            border-radius: 8px; /* 给图片加个圆角 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 添加阴影增加立体感 */
+        }
+
+        /* 定义滚动动画 */
+        @keyframes slide {
+            0% { transform: translatey(0); }
+            /* 滚动到图片总高度的一半时，无缝衔接 */
+            100% { transform: translatey(-50%); }
+        }
+    </style>
+</head>
+<body>
+<!--     
+      HTML 结构 
+      重要提示:
+      请在您的项目文件夹中创建一个名为 "照片墙" 的子文件夹,
+      然后将您自己的图片放入该文件夹。
+      下面的 src 路径 (例如 "../照片墙/image1.png") 假设了这样的文件结构。
+-->
+    <div class="gallery">
+        <div class="gallery_line">
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+            <!-- 重复图片以实现无缝滚动 -->
+            <!-- <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/> -->
+        </div>
+        <div class="gallery_line">
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+            <!-- 重复图片以实现无缝滚动 -->
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+        </div>
+                <div class="gallery_line">
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+            <!-- 重复图片以实现无缝滚动 -->
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+        </div>
+                <div class="gallery_line">
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+            <!-- 重复图片以实现无缝滚动 -->
+            <img src="../照片墙/image1.png" alt="本地图片1"/>
+            <img src="../照片墙/image2.png" alt="本地图片2"/>
+            <img src="../照片墙/image3.png" alt="本地图片3"/>
+            <img src="../照片墙/image4.png" alt="本地图片4"/>
+            <img src="../照片墙/image5.png" alt="本地图片5"/>
+            <img src="../照片墙/image6.png" alt="本地图片6"/>
+            <img src="../照片墙/image7.png" alt="本地图片7"/>
+            <img src="../照片墙/image8.png" alt="本地图片8"/>
+            <img src="../照片墙/image9.png" alt="本地图片9"/>
+            <img src="../照片墙/image10.png" alt="本地图片10"/>
+        </div>
+    </div>
+</body>
+</html>
