@@ -1,165 +1,133 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>无限滚动照片墙</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>无限滚动照片墙 (最终修复版)</title>
     <style>
-        /* CSS 部分 */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            width: 100vw;
-            height: 100vh;
-            font-family: 'Poppins', sans-serif;
-            overflow: hidden;
-            background-color: transparent; /* 设置背景为透明 */
-        }
+      /* CSS部分无需改动 */
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        font-family: "Poppins", sans-serif;
+        overflow: hidden;
+        background-color: transparent;
+      }
 
-        /* 照片画廊容器 */
-        .gallery {
-            display: flex;
-            gap: 1.5vw;
-            width: 90%;
-            max-width: 1200px;
-            height: 100%;
-        }
+      .gallery {
+        display: flex;
+        gap: 1.5vw;
+        width: 90%;
+        max-width: 1200px;
+        height: 100%;
+      }
 
-        /* 每一列照片 */
-        .gallery_line {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5vw;
-            height: fit-content;
-            /* 应用滚动动画 */
-            animation: slide 30s linear infinite;
-        }
+      .gallery_line {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5vw;
+        height: fit-content;
+        flex: 1;
+        min-width: 0;
+        /* 动画默认不启动，等待JS指令 */
+      }
 
-        /* 第二列和第四列照片反向滚动 */
-        .gallery_line:nth-child(2),
-        .gallery_line:nth-child(4) {
-            animation-direction: reverse;
-        }
+      .gallery_line img {
+        flex: 1 1 auto;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
 
-        .gallery_line img {
-            flex: 1 1 auto;
-            width: 100%;
-            object-fit: cover;
-            border-radius: 8px; /* 给图片加个圆角 */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 添加阴影增加立体感 */
+      @keyframes slide {
+        0% {
+          transform: translateY(0);
         }
-
-        /* 定义滚动动画 */
-        @keyframes slide {
-            0% { transform: translatey(0); }
-            /* 滚动到图片总高度的一半时，无缝衔接 */
-            100% { transform: translatey(-50%); }
+        100% {
+          transform: translateY(-50%);
         }
+      }
     </style>
-</head>
-<body>
-<!--     
-      HTML 结构 
-      重要提示:
-      请在您的项目文件夹中创建一个名为 "照片墙" 的子文件夹,
-      然后将您自己的图片放入该文件夹。
-      下面的 src 路径 (例如 "../照片墙/image1.png") 假设了这样的文件结构。
--->
+  </head>
+  <body>
     <div class="gallery">
-        <div class="gallery_line">
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-            <!-- 重复图片以实现无缝滚动 -->
-            <!-- <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/> -->
-        </div>
-        <div class="gallery_line">
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-            <!-- 重复图片以实现无缝滚动 -->
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-        </div>
-                <div class="gallery_line">
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-            <!-- 重复图片以实现无缝滚动 -->
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-        </div>
-                <div class="gallery_line">
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-            <!-- 重复图片以实现无缝滚动 -->
-            <img src="../照片墙/image1.png" alt="本地图片1"/>
-            <img src="../照片墙/image2.png" alt="本地图片2"/>
-            <img src="../照片墙/image3.png" alt="本地图片3"/>
-            <img src="../照片墙/image4.png" alt="本地图片4"/>
-            <img src="../照片墙/image5.png" alt="本地图片5"/>
-            <img src="../照片墙/image6.png" alt="本地图片6"/>
-            <img src="../照片墙/image7.png" alt="本地图片7"/>
-            <img src="../照片墙/image8.png" alt="本地图片8"/>
-            <img src="../照片墙/image9.png" alt="本地图片9"/>
-            <img src="../照片墙/image10.png" alt="本地图片10"/>
-        </div>
+      <div class="gallery_line"></div>
+      <div class="gallery_line"></div>
+      <div class="gallery_line"></div>
+      <div class="gallery_line"></div>
     </div>
-</body>
+
+    <script>
+      // --- 您需要修改的参数 ---
+      const n = 42;
+      const photoFolderPath = "../照片墙/";
+      const secondsPerPhoto = 1.5;
+      // ------------------------
+
+      const galleryLines = document.querySelectorAll(".gallery_line");
+      const numColumns = galleryLines.length;
+
+      // 1. 制定“蓝图”：在内存中规划好每列的照片编号
+      let columnContents = Array.from({ length: numColumns }, () => []);
+      for (let i = 1; i <= n; i++) {
+        const columnIndex = (i - 1) % numColumns;
+        columnContents[columnIndex].push(i);
+      }
+      const remainder = n % numColumns;
+      if (remainder !== 0) {
+        const firstColumnPhotoNumbers = columnContents[0];
+        for (let i = remainder; i < numColumns; i++) {
+          const randomPhotoIndex = Math.floor(
+            Math.random() * firstColumnPhotoNumbers.length,
+          );
+          const photoNumberToCopy = firstColumnPhotoNumbers[randomPhotoIndex];
+          columnContents[i].push(photoNumberToCopy);
+        }
+      }
+
+      // 2. “施工建造”：将图片添加到DOM，并追踪它们的加载状态
+      const imageLoadPromises = []; // 用来存放所有图片加载的“承诺”
+
+      for (let cycle = 0; cycle < 2; cycle++) {
+        columnContents.forEach((photoNumbers, columnIndex) => {
+          photoNumbers.forEach((photoNumber) => {
+            // 为每张图片创建一个加载承诺
+            const promise = new Promise((resolve, reject) => {
+              const img = document.createElement("img");
+              img.src = `${photoFolderPath}image${photoNumber}.png`;
+              img.alt = `本地图片${photoNumber}`;
+
+              // 关键：当图片成功加载时，这个承诺就完成了
+              img.onload = resolve;
+              // 如果图片加载失败，也标记为完成，避免整个流程卡住
+              img.onerror = resolve;
+
+              galleryLines[columnIndex].appendChild(img);
+            });
+            imageLoadPromises.push(promise);
+          });
+        });
+      }
+
+      // 3. 启动动画：等待所有图片的“承诺”都完成（即全部加载完毕）
+      Promise.all(imageLoadPromises).then(() => {
+        console.log("所有图片已加载完成，现在启动动画！");
+
+        const photosInLongestColumn = Math.ceil(n / numColumns);
+        const animationDuration = photosInLongestColumn * secondsPerPhoto;
+
+        galleryLines.forEach((line, index) => {
+          line.style.animation = `slide ${animationDuration}s linear infinite`;
+          if ((index + 1) % 2 === 0) {
+            line.style.animationDirection = "reverse";
+          }
+        });
+      });
+    </script>
+  </body>
 </html>

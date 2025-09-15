@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>游客评论</title>
+    <title>游客评论 (带分页)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* 确保页面背景是透明的 */
         html, body {
             font-family: 'Noto Sans SC', sans-serif;
             background-color: transparent;
             margin: 0;
             padding: 0;
         }
-        /* 单个评论的样式 */
         .comment-item {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
@@ -28,62 +26,163 @@
             display: flex;
             align-items: flex-start;
         }
-        /* 评论者（Key）的样式 */
         .comment-author {
             font-weight: 500;
             color: #c2410c;
             white-space: nowrap;
             margin-right: 0.75em;
         }
-        /* 评论内容（Value）的样式 */
         .comment-content {
             color: #44403c;
-            
-            /* [关键修复 1] 允许 flex-item 收缩至小于其内容尺寸，防止溢出 */
             min-width: 0;
-            
-            /* [关键修复 2] 强制长单词或连续字符串换行 */
             overflow-wrap: break-word;
-            word-wrap: break-word; /* 兼容旧版浏览器 */
+            word-wrap: break-word;
+        }
+        /* 分页按钮通用样式 */
+        .pagination-btn {
+            padding: 0.25rem 0.75rem;
+            border: 1px solid #d97706;
+            color: #d97706;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #fef3c7;
+        }
+        /* 当前页码的激活样式 */
+        .pagination-btn.active {
+            background-color: #d97706;
+            color: white;
+            border-color: #d97706;
+        }
+        /* 按钮禁用时的样式 */
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
-<body>
+<body class="p-4">
 
-    <div id="comments-list" class="space-y-4 p-4">
-    </div>
+    <div id="comments-list" class="space-y-4">
+        </div>
+
+    <div id="pagination-controls" class="flex items-center justify-center space-x-2 mt-6 text-sm">
+        </div>
 
     <script>
-        // --- 在这里写死你的评论数据 ---
+        // --- 模拟的评论数据 (特意增加了几条用于测试分页) ---
         const visitorComments = {
             "一位路过的旅人": "页面设计得很漂亮，秋天的落叶效果很温馨，赞！",
             "杏酱的忠实粉丝": "终于等到更新啦！每次来看都有新的惊喜。",
             "隔壁班的同学": "你好呀，没想到在这里看到你的主页！做得真棒！",
-            "一位前端爱好者": "这段有空格的长文本在修复前就可以正常换行，因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。",
-            "神秘的留言者": "愿你的每一天都如秋叶般绚烂，如暖阳般和煦。这段是修复前会被截断的长文本，包含了很多连续的字符，没有空格。因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。因为它包含了可以自然断开的空格字符，浏览器知道在哪里进行分行处理。",
+            "前端爱好者": "分页功能做得不错，交互很流畅。",
+            "神秘的留言者": "愿你的每一天都如秋叶般绚烂，如暖阳般和煦。",
+            "第六位访客": "这是第六条评论，用来触发分页功能。",
+            "第七位访客": "第七条评论，看看效果如何。",
+            "第八位访客": "评论有点多，分页确实是必要的。",
+            "第九位访客": "第九条评论。",
+            "第十位访客": "第十条评论。",
+            "第十一位访客": "最后一条测试评论！",
         };
 
-        // --- 负责将评论数据显示到页面上的函数 (无变化) ---
+        // --- 核心逻辑 ---
+        const COMMENTS_PER_PAGE = 5;
+        let currentPage = 1;
+
+        // 1. 将对象转换为数组，便于处理
+        const commentsArray = Object.keys(visitorComments).map(author => {
+            return { author, content: visitorComments[author] };
+        });
+
+        const totalComments = commentsArray.length;
+        const totalPages = Math.ceil(totalComments / COMMENTS_PER_PAGE);
+
+        // 2. 渲染指定页码的评论
         function renderComments() {
             const listContainer = document.getElementById('comments-list');
             listContainer.innerHTML = '';
-            for (const author in visitorComments) {
-                if (Object.prototype.hasOwnProperty.call(visitorComments, author)) {
-                    const content = visitorComments[author];
-                    const commentElement = document.createElement('div');
-                    commentElement.className = 'comment-item';
-                    commentElement.innerHTML = `
-                        <span class="comment-author">${author}:</span>
-                        <span class="comment-content">${content}</span>
-                    `;
-                    listContainer.appendChild(commentElement);
-                }
-            }
+
+            const startIndex = (currentPage - 1) * COMMENTS_PER_PAGE;
+            const endIndex = startIndex + COMMENTS_PER_PAGE;
+            const paginatedComments = commentsArray.slice(startIndex, endIndex);
+
+            paginatedComments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment-item';
+                commentElement.innerHTML = `
+                    <span class="comment-author">${comment.author}:</span>
+                    <span class="comment-content">${comment.content}</span>
+                `;
+                listContainer.appendChild(commentElement);
+            });
         }
 
-        // --- 页面加载完成后执行的逻辑 (无变化) ---
-        window.addEventListener('DOMContentLoaded', () => {
+        // 3. 渲染分页控件
+        function renderPagination() {
+            const paginationContainer = document.getElementById('pagination-controls');
+            paginationContainer.innerHTML = '';
+
+            if (totalPages <= 1) return; // 如果只有一页或没有评论，则不显示分页
+
+            // 上一页按钮
+            const prevButton = document.createElement('button');
+            prevButton.innerText = '上一页';
+            prevButton.className = 'pagination-btn';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => displayPage(currentPage - 1);
+            paginationContainer.appendChild(prevButton);
+
+            // 页码按钮
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.innerText = i;
+                pageButton.className = 'pagination-btn';
+                if (i === currentPage) {
+                    pageButton.classList.add('active');
+                }
+                pageButton.onclick = () => displayPage(i);
+                paginationContainer.appendChild(pageButton);
+            }
+
+            // 下一页按钮
+            const nextButton = document.createElement('button');
+            nextButton.innerText = '下一页';
+            nextButton.className = 'pagination-btn';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => displayPage(currentPage + 1);
+            paginationContainer.appendChild(nextButton);
+
+            // 跳转功能
+            const jumpContainer = document.createElement('div');
+            jumpContainer.className = 'flex items-center ml-4';
+            jumpContainer.innerHTML = `
+                <input type="number" id="page-jump-input" class="w-12 text-center border border-gray-300 rounded-md py-1 px-2" min="1" max="${totalPages}">
+                <button id="page-jump-btn" class="pagination-btn ml-2">跳转</button>
+            `;
+            paginationContainer.appendChild(jumpContainer);
+
+            document.getElementById('page-jump-btn').onclick = () => {
+                const pageNum = parseInt(document.getElementById('page-jump-input').value, 10);
+                if (pageNum >= 1 && pageNum <= totalPages) {
+                    displayPage(pageNum);
+                } else {
+                    alert(`请输入1到${totalPages}之间的页码`);
+                }
+            };
+        }
+        
+        // 4. 主控制函数：更新页面显示
+        function displayPage(pageNumber) {
+            currentPage = pageNumber;
             renderComments();
+            renderPagination();
+            updateIframeHeight();
+        }
+
+        // 5. 更新父窗口的Iframe高度
+        function updateIframeHeight() {
             if (window.parent) {
                 requestAnimationFrame(() => {
                     const totalHeight = document.body.scrollHeight;
@@ -93,7 +192,13 @@
                     }, '*');
                 });
             }
+        }
+        
+        // 页面加载完成后执行
+        window.addEventListener('DOMContentLoaded', () => {
+            displayPage(1); // 默认显示第一页
         });
+
     </script>
 
 </body>
