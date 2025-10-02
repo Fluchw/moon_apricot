@@ -7,56 +7,63 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* 基础样式 */
+        /* 基礎样式 */
         body {
             font-family: 'Noto Sans SC', sans-serif;
-            background-color: transparent; /* 背景为透明 */
+            background-color: transparent;
             margin: 0;
             padding: 1rem;
+            color: #333;
         }
 
-        /* 照片墙容器 - 使用 CSS Columns 实现瀑布流 */
+        /* --- 修改：照片墙容器 - 使用 Flexbox 排列“列” --- */
         .photo-wall-container {
-            column-count: 4; /* 默认4列 */
-            column-gap: 25px; /* 列间距 */
+            display: flex;
+            justify-content: center;
+            gap: 25px; /* 列之間的間距 */
+            width: 100%;
+        }
+
+        /* --- 新增：照片列的样式 --- */
+        .photo-column {
+            display: flex;
+            flex-direction: column; /* 讓圖片在列內垂直排列 */
+            gap: 25px; /* 圖片之間的垂直間距 */
+            flex: 1; /* 讓所有列平分寬度 */
+            min-width: 0; /* 解決 flex 佈局中的溢出問題 */
         }
 
         /* 单张照片项目 */
         .photo-item {
-            display: inline-block; /* 瀑布流的关键属性 */
-            width: 100%;
-            break-inside: avoid; /* 防止元素在跨列时被截断 */
-            margin-bottom: 25px; /* 图片之间的垂直间距 */
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            /* 新增：載入動畫 */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        /* 動畫關鍵幀 */
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .photo-item img {
             width: 100%;
             height: auto;
             display: block;
-            border-radius: 4px; /* 给图片本身加一点圆角 */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 给图片加阴影，替代相框 */
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         /* 鼠标悬停效果 */
-        .photo-item:hover {
-            transform: translateY(-8px) scale(1.05) rotate(0deg) !important;
-            z-index: 10;
-            position: relative;
+        .photo-item:hover img {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
         
-        /* 响应式调整列数 */
-        @media (max-width: 1200px) {
-            .photo-wall-container { column-count: 3; }
-        }
-        @media (max-width: 800px) {
-            .photo-wall-container { column-count: 2; }
-        }
-        @media (max-width: 500px) {
-            .photo-wall-container { column-count: 1; }
-        }
-
         /* 灯箱 (Modal) 样式 - 保持不变 */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
@@ -70,11 +77,25 @@
         .close { position: absolute; top: 20px; right: 35px; color: #fff; font-size: 40px;
             font-weight: bold; transition: color 0.3s; cursor: pointer; }
         .close:hover, .close:focus { color: #bbb; }
+
+        /* 響應式：在小螢幕上減少列數 */
+        @media (max-width: 1024px) {
+            .photo-column:nth-child(4) { display: none; } /* 隱藏第4列 */
+        }
+        @media (max-width: 768px) {
+            .photo-column:nth-child(3) { display: none; } /* 隱藏第3列 */
+        }
+        @media (max-width: 500px) {
+             .photo-column:nth-child(2) { display: none; } /* 隱藏第2列 */
+        }
+
+
     </style>
 </head>
 <body>
     <div class="photo-wall-container" id="photo-wall">
-        </div>
+        <!-- JavaScript 將會在這裡動態創建列 -->
+    </div>
 
     <div id="myModal" class="modal">
         <span class="close">&times;</span>
@@ -87,46 +108,95 @@
             const modal = document.getElementById('myModal');
             const modalImg = document.getElementById('modalImage');
             const closeBtn = document.querySelector('.close');
-            
-            const photos = [
-                { src: 'image1.png' }, { src: 'image2.png' },
-                { src: 'image3.png' }, { src: 'image4.png' },
-                { src: 'image5.png' }, { src: 'image6.png' },
-                { src: 'image7.png' }, { src: 'image8.png' },
-                { src: 'image9.png' }, { src: 'image10.png' }
-            ];
-            
-            const imageLoadPromises = [];
 
-            photos.forEach(photo => {
-                const photoItem = document.createElement('div');
-                photoItem.className = 'photo-item';
-                const img = document.createElement('img');
-                img.src = photo.src;
-                img.alt = '照片';
-                
-                const promise = new Promise((resolve) => {
-                    img.onload = resolve;
-                    img.onerror = () => {
-                        img.src='https://placehold.co/400x300/ccc/333?text=图片加载失败';
-                        resolve(); // 失败也要 resolve
-                    };
-                });
-                imageLoadPromises.push(promise);
-                
-                photoItem.appendChild(img);
-                
-                const randomRotation = Math.random() * 8 - 4; // 减小旋转角度
-                photoItem.style.transform = `rotate(${randomRotation}deg)`;
-                
-                photoItem.addEventListener('click', function() {
-                    modal.style.display = 'flex';
-                    modalImg.src = img.src;
-                    setTimeout(() => modal.classList.add('show'), 10);
-                });
+            // --- 您需要修改的参数 ---
+            const n = 5; // 要顯示的照片總數
+            const photoPrefix = 'image'; // 照片檔名的前綴
+            const photoSuffix = '.png'; // 照片檔名的後綴
+            const numColumns = 4; // 您希望的列數
+            // ------------------------
+            
+            // --- 新增：一個變數來“記住”上次的列數 ---
+            let lastKnownVisibleColumns = 0;
 
-                photoWall.appendChild(photoItem);
-            });
+            // --- 邏輯開始 ---
+            function generatePhotoWall() {
+                // 清空並創建列
+                photoWall.innerHTML = '';
+                for (let i = 0; i < numColumns; i++) {
+                    const col = document.createElement('div');
+                    col.className = 'photo-column';
+                    photoWall.appendChild(col);
+                }
+                const photoColumns = document.querySelectorAll(".photo-column");
+                const visibleColumns = Array.from(photoColumns).filter(col => window.getComputedStyle(col).display !== 'none');
+                const numVisibleColumns = visibleColumns.length;
+                
+                // --- 修改：每次重建時，都更新“記憶”中的列數 ---
+                lastKnownVisibleColumns = numVisibleColumns;
+
+
+                // 1. 制定“蓝图”：在内存中规划好每列的照片编号
+                let columnContents = Array.from({ length: numVisibleColumns }, () => []);
+                for (let i = 1; i <= n; i++) {
+                    const columnIndex = (i - 1) % numVisibleColumns;
+                    columnContents[columnIndex].push(i);
+                }
+
+                // 2. 补齐逻辑：如果照片总数不是列数的整数倍，用第一列的随机照片补齐其他列
+                const remainder = n % numVisibleColumns;
+                if (remainder !== 0) {
+                    const firstColumnPhotoNumbers = columnContents[0];
+                    if (firstColumnPhotoNumbers && firstColumnPhotoNumbers.length > 0) {
+                        for (let i = remainder; i < numVisibleColumns; i++) {
+                            const randomPhotoIndex = Math.floor(Math.random() * firstColumnPhotoNumbers.length);
+                            const photoNumberToCopy = firstColumnPhotoNumbers[randomPhotoIndex];
+                            columnContents[i].push(photoNumberToCopy);
+                        }
+                    }
+                }
+
+                // 3. 渲染DOM：根据蓝图创建图片元素
+                const imageLoadPromises = [];
+                let animationDelayCounter = 0;
+
+                columnContents.forEach((photoNumbers, colIndex) => {
+                    const columnElement = visibleColumns[colIndex];
+                    photoNumbers.forEach(photoNum => {
+                        const photoSrc = `${photoPrefix}${photoNum}${photoSuffix}`;
+                        const photoItem = document.createElement('div');
+                        photoItem.className = 'photo-item';
+                        // 增加動畫延遲
+                        photoItem.style.animationDelay = `${animationDelayCounter * 0.05}s`;
+
+                        const img = document.createElement('img');
+                        img.src = photoSrc;
+                        img.alt = `照片 ${photoNum}`;
+                        const promise = new Promise((resolve) => {
+                            img.onload = resolve;
+                            img.onerror = () => {
+                                img.src = `https://placehold.co/400x300/ccc/333?text=${photoPrefix}${photoNum}+加载失败`;
+                                resolve();
+                            };
+                        });
+                        imageLoadPromises.push(promise);
+                        photoItem.appendChild(img);
+                        photoItem.addEventListener('click', function() {
+                            modal.style.display = 'flex';
+                            modalImg.src = img.src;
+                            setTimeout(() => modal.classList.add('show'), 10);
+                        });
+
+                        columnElement.appendChild(photoItem);
+                        animationDelayCounter++;
+                    });
+                });
+                
+                Promise.all(imageLoadPromises).then(() => {
+                    sendHeight();
+                });
+            }
+
 
             function closeModal() {
                 modal.classList.remove('show');
@@ -138,43 +208,44 @@
                 if (e.target === modal) closeModal();
             });
 
-            // ======================================================
-            // ▼▼▼ [已修复] 使用 ResizeObserver 和防抖逻辑来发送高度 ▼▼▼
-            // ======================================================
+            // 初始載入
+            generatePhotoWall();
 
-            // 创建一个变量来“记忆”上次发送的高度
-            let lastSentHeight = 0;
-
-            // 创建一个智能的、可复用的发送函数
-            const sendHeight = () => {
-                // 使用 scrollHeight 来获取包含所有内容的总高度
-                const currentHeight = document.documentElement.scrollHeight;
-
-                // 只有当高度变化超过2像素时才发送，有效避免无限循环
-                if (Math.abs(currentHeight - lastSentHeight) > 2) {
-                    window.parent.postMessage({ type: 'iframeHeight', height: currentHeight }, '*');
-                    // 发送后，立刻更新“记忆”
-                    lastSentHeight = currentHeight;
+            // --- 修改：建立一個“聰明”的resize處理函式 ---
+            const smartResizeHandler = () => {
+                // 檢查當前可見的列數
+                const currentlyVisibleColumns = Array.from(document.querySelectorAll(".photo-column"))
+                                                    .filter(col => window.getComputedStyle(col).display !== 'none')
+                                                    .length;
+                // 只有當可見列數發生變化時，才重新生成照片牆
+                if (currentlyVisibleColumns !== lastKnownVisibleColumns) {
+                    generatePhotoWall();
                 }
             };
 
-            // 等待所有图片都加载完成
-            Promise.all(imageLoadPromises).then(() => {
-                // 1. 立即发送一次初始高度
-                sendHeight();
+            // 監聽視窗大小變化，並呼叫我們“聰明”的處理函式
+            window.addEventListener('resize', debounce(smartResizeHandler, 250));
 
-                // 2. 创建一个 ResizeObserver 来监视 body 内容尺寸的变化
-                const observer = new ResizeObserver(() => {
-                    // 当内容尺寸变化时（例如窗口缩放导致列数变化），调用我们的智能发送函数
-                    sendHeight();
-                });
+            // 防抖函數
+            function debounce(func, delay) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
 
-                // 3. 让 observer 开始监视 body 元素
-                observer.observe(document.body);
-            });
-            // ======================================================
-            // ▲▲▲ 修复完成 ▲▲▲
-            // ======================================================
+            // 高度發送邏輯
+            let lastSentHeight = 0;
+            const sendHeight = () => {
+                const currentHeight = document.documentElement.scrollHeight;
+                if (Math.abs(currentHeight - lastSentHeight) > 2) {
+                    window.parent.postMessage({ type: 'iframeHeight', height: currentHeight }, '*');
+                    lastSentHeight = currentHeight;
+                }
+            };
+            const observer = new ResizeObserver(sendHeight);
+            observer.observe(document.body);
         });
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>游客评论 (带分页)</title>
+    <title>游客评论 (可切换模式)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,180 +26,338 @@
             display: flex;
             align-items: flex-start;
         }
+        
+        /* --- 【已修改】恢复作者信息默认可见的样式 --- */
+        .comment-author-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-right: 0.75em;
+            flex-shrink: 0;
+        }
+
         .comment-author {
             font-weight: 500;
-            color: #c2410c;
+            color: #c2410c; /* 恢复原来的颜色 */
             white-space: nowrap;
-            margin-right: 0.75em;
         }
+        .comment-date {
+            font-size: 0.75rem;
+            color: #a8a29e; /* 恢复原来的颜色 */
+            white-space: nowrap;
+            margin-top: 0.25rem;
+        }
+
         .comment-content {
             color: #44403c;
-            min-width: 0;
+            white-space: normal;
             overflow-wrap: break-word;
             word-wrap: break-word;
+            min-width: 0;
         }
-        /* 分页按钮通用样式 */
-        .pagination-btn {
+        /* 按钮通用样式 */
+        .btn {
             padding: 0.25rem 0.75rem;
             border: 1px solid #d97706;
             color: #d97706;
             border-radius: 0.375rem;
             cursor: pointer;
             transition: all 0.2s;
+            background-color: white;
         }
-        .pagination-btn:hover:not(:disabled) {
+        .btn:hover:not(:disabled) {
             background-color: #fef3c7;
         }
-        /* 当前页码的激活样式 */
-        .pagination-btn.active {
+        .btn.active {
             background-color: #d97706;
             color: white;
             border-color: #d97706;
         }
-        /* 按钮禁用时的样式 */
-        .pagination-btn:disabled {
+        .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        /* --- 河流滚动模式的专属样式 --- */
+        #scroll-container {
+            overflow: hidden;
+            position: relative;
+        }
+        #comments-list.river-mode {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .river-mode .comment-item {
+            flex-shrink: 0; 
+            width: max-content;
+            margin-right: 1rem;
+        }
+        .river-mode .comment-content {
+            white-space: nowrap;
+        }
+        .comment-row {
+            display: flex;
+            width: max-content; 
+            animation: scroll-horizontal linear infinite;
+        }
+        .comment-row:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scroll-horizontal {
+            from { transform: translateX(0%); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* --- 【新增】鼠标跟随提示框的样式 --- */
+        #comment-tooltip {
+            position: absolute;
+            background-color: #4A5568;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 9999;
+            pointer-events: none; /* 关键：让鼠标事件穿透提示框 */
+            white-space: nowrap;
+            display: none; /* 默认隐藏 */
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+        .tooltip-author {
+            font-weight: 500;
+            display: block;
+        }
+        .tooltip-date {
+            font-size: 0.75rem;
+            color: #A0AEC0;
+            display: block;
+            margin-top: 0.25rem;
         }
     </style>
 </head>
 <body class="p-4">
 
-    <div id="comments-list" class="space-y-4">
-        </div>
+    <div id="mode-switcher" class="flex items-center justify-center space-x-2 mb-6 text-sm">
+        <button id="btn-autoscroll" class="btn active">滚动模式</button>
+        <button id="btn-pagination" class="btn">翻页模式</button>
+    </div>
 
-    <div id="pagination-controls" class="flex items-center justify-center space-x-2 mt-6 text-sm">
-        </div>
+    <div id="scroll-container">
+        <div id="comments-list"></div>
+    </div>
+
+    <div id="pagination-controls" class="flex items-center justify-center space-x-2 mt-6 text-sm"></div>
 
     <script>
-        // --- 模拟的评论数据 (特意增加了几条用于测试分页) ---
-        const visitorComments = {
-            "一位路过的旅人": "页面设计得很漂亮，秋天的落叶效果很温馨，赞！",
-            "杏酱的忠实粉丝": "终于等到更新啦！每次来看都有新的惊喜。",
-            "隔壁班的同学": "你好呀，没想到在这里看到你的主页！做得真棒！",
-            "前端爱好者": "分页功能做得不错，交互很流畅。",
-            "神秘的留言者": "愿你的每一天都如秋叶般绚烂，如暖阳般和煦。",
-            "第六位访客": "这是第六条评论，用来触发分页功能。",
-            "第七位访客": "第七条评论，看看效果如何。",
-            "第八位访客": "评论有点多，分页确实是必要的。",
-            "第九位访客": "第九条评论。",
-            "第十位访客": "第十条评论。",
-            "第十一位访客": "最后一条测试评论！",
-        };
+        const visitorComments = [
+            { author: "一位路过的旅人", content: "页面设计得很漂亮，秋天的落叶效果很温馨，赞！", date: "2025-10-02 10:25" },
+            { author: "滔滔不绝的评论家", content: "这条评论非常非常长，是为了测试一下当文字内容超出一般长度时，弹幕样式的滚动效果是否依然流畅自然。我们需要确保它不会换行，并且能够完整地从屏幕右侧滚动到左側，而不会破坏整体的布局美感。", date: "2025-10-02 09:18" },
+            { author: "杏酱的忠实粉丝", content: "终于等到更新啦！每次来看都有新的惊喜。", date: "2025-10-01 22:45" },
+            { author: "隔壁班的同学", content: "你好呀，没想到在这里看到你的主页！做得真棒！", date: "2025-10-01 18:12" },
+            { author: "前端爱好者", content: "分页功能做得不错，交互很流畅。", date: "2025-09-30 15:05" },
+            { author: "另一位长评测试员", content: "这又是一条用来测试的长评论，让我们看看多行弹幕在处理不同长度的文本时表现如何，这对于用户体验来说至关重要。", date: "2025-09-30 11:20" },
+            { author: "神秘的留言者", content: "愿你的每一天都如秋叶般绚烂，如暖阳般和煦。", date: "2025-09-29 23:59" },
+            { author: "第六位访客", content: "这是第六条评论，用来触发分页功能。", date: "2025-09-29 14:30" },
+            { author: "第七位访客", content: "第七条评论，看看效果如何。", date: "2025-09-28 19:55" },
+            { author: "第八位访客", content: "评论有点多，分页确实是必要的。", date: "2025-09-28 16:01" },
+            { author: "第九位访客", content: "第九条评论。", date: "2025-09-27 12:00" },
+            { author: "第十位访客", content: "第十条评论。", date: "2025-09-26 20:19" },
+            { author: "第十一位访客", content: "最后一条测试评论！", date: "2025-09-25 08:42" },
+        ];
 
-        // --- 核心逻辑 ---
-        const COMMENTS_PER_PAGE = 5;
+        const COMMENTS_PER_PAGE = 10;
+        const SCROLL_CONTAINER_HEIGHT = '700px';
+        const NUM_SCROLL_ROWS = 7;
         let currentPage = 1;
+        let currentMode = 'autoscroll'; 
 
-        // 1. 将对象转换为数组，便于处理
-        const commentsArray = Object.keys(visitorComments).map(author => {
-            return { author, content: visitorComments[author] };
-        });
-
+        const commentsArray = visitorComments;
         const totalComments = commentsArray.length;
         const totalPages = Math.ceil(totalComments / COMMENTS_PER_PAGE);
-
-        // 2. 渲染指定页码的评论
-        function renderComments() {
-            const listContainer = document.getElementById('comments-list');
-            listContainer.innerHTML = '';
-
-            const startIndex = (currentPage - 1) * COMMENTS_PER_PAGE;
+        
+        const commentsList = document.getElementById('comments-list');
+        const paginationControls = document.getElementById('pagination-controls');
+        const scrollContainer = document.getElementById('scroll-container');
+        const btnPagination = document.getElementById('btn-pagination');
+        const btnAutoscroll = document.getElementById('btn-autoscroll');
+        
+        function renderCommentsForPage(page) {
+            commentsList.innerHTML = '';
+            commentsList.classList.remove('river-mode');
+            const startIndex = (page - 1) * COMMENTS_PER_PAGE;
             const endIndex = startIndex + COMMENTS_PER_PAGE;
             const paginatedComments = commentsArray.slice(startIndex, endIndex);
+            paginatedComments.forEach(comment => createCommentElement(comment, commentsList));
+        }
 
-            paginatedComments.forEach(comment => {
-                const commentElement = document.createElement('div');
-                commentElement.className = 'comment-item';
-                commentElement.innerHTML = `
+        function createCommentElement(comment, parentElement) {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'comment-item';
+            // --- 【新增】为提示框功能添加 data-* 属性 ---
+            commentElement.dataset.author = comment.author;
+            commentElement.dataset.date = comment.date;
+            
+            // --- 【已修改】恢复默认可见的结构，并为作者名字加上冒号 ---
+            commentElement.innerHTML = `
+                <div class="comment-author-info">
                     <span class="comment-author">${comment.author}:</span>
-                    <span class="comment-content">${comment.content}</span>
-                `;
-                listContainer.appendChild(commentElement);
-            });
-        }
-
-        // 3. 渲染分页控件
-        function renderPagination() {
-            const paginationContainer = document.getElementById('pagination-controls');
-            paginationContainer.innerHTML = '';
-
-            if (totalPages <= 1) return; // 如果只有一页或没有评论，则不显示分页
-
-            // 上一页按钮
-            const prevButton = document.createElement('button');
-            prevButton.innerText = '上一页';
-            prevButton.className = 'pagination-btn';
-            prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => displayPage(currentPage - 1);
-            paginationContainer.appendChild(prevButton);
-
-            // 页码按钮
-            for (let i = 1; i <= totalPages; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.innerText = i;
-                pageButton.className = 'pagination-btn';
-                if (i === currentPage) {
-                    pageButton.classList.add('active');
-                }
-                pageButton.onclick = () => displayPage(i);
-                paginationContainer.appendChild(pageButton);
-            }
-
-            // 下一页按钮
-            const nextButton = document.createElement('button');
-            nextButton.innerText = '下一页';
-            nextButton.className = 'pagination-btn';
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => displayPage(currentPage + 1);
-            paginationContainer.appendChild(nextButton);
-
-            // 跳转功能
-            const jumpContainer = document.createElement('div');
-            jumpContainer.className = 'flex items-center ml-4';
-            jumpContainer.innerHTML = `
-                <input type="number" id="page-jump-input" class="w-12 text-center border border-gray-300 rounded-md py-1 px-2" min="1" max="${totalPages}">
-                <button id="page-jump-btn" class="pagination-btn ml-2">跳转</button>
+                    <span class="comment-date">${comment.date}</span>
+                </div>
+                <span class="comment-content">${comment.content}</span>
             `;
-            paginationContainer.appendChild(jumpContainer);
-
-            document.getElementById('page-jump-btn').onclick = () => {
-                const pageNum = parseInt(document.getElementById('page-jump-input').value, 10);
-                if (pageNum >= 1 && pageNum <= totalPages) {
-                    displayPage(pageNum);
-                } else {
-                    alert(`请输入1到${totalPages}之间的页码`);
-                }
-            };
+            parentElement.appendChild(commentElement);
         }
-        
-        // 4. 主控制函数：更新页面显示
+
+        function renderPagination() {
+            paginationControls.innerHTML = '';
+            if (totalPages <= 1) return;
+            const createButton = (text, page, isDisabled = false) => {
+                const btn = document.createElement('button');
+                btn.innerText = text;
+                btn.className = 'btn';
+                if (isDisabled) btn.disabled = true;
+                if (text == currentPage) btn.classList.add('active');
+                btn.onclick = () => displayPage(page);
+                return btn;
+            };
+            paginationControls.appendChild(createButton('上一页', currentPage - 1, currentPage === 1));
+            for (let i = 1; i <= totalPages; i++) {
+                paginationControls.appendChild(createButton(i, i));
+            }
+            paginationControls.appendChild(createButton('下一页', currentPage + 1, currentPage === totalPages));
+        }
+
         function displayPage(pageNumber) {
             currentPage = pageNumber;
-            renderComments();
+            renderCommentsForPage(currentPage);
             renderPagination();
             updateIframeHeight();
         }
 
-        // 5. 更新父窗口的Iframe高度
+        function initAutoScroll() {
+            commentsList.innerHTML = '';
+            commentsList.classList.add('river-mode');
+
+            const rows = [];
+            for (let i = 0; i < NUM_SCROLL_ROWS; i++) {
+                const row = document.createElement('div');
+                row.className = 'comment-row';
+                rows.push(row);
+                commentsList.appendChild(row);
+            }
+
+            commentsArray.forEach((comment, index) => {
+                const rowIndex = index % NUM_SCROLL_ROWS;
+                createCommentElement(comment, rows[rowIndex]);
+            });
+
+            setTimeout(() => {
+                rows.forEach((row) => {
+                    while (row.scrollWidth <= scrollContainer.clientWidth) {
+                        if (row.children.length > totalComments * 5) {
+                            console.warn("无法使行内容溢出，已停止补充。");
+                            break; 
+                        }
+                        commentsArray.forEach(comment => {
+                            createCommentElement(comment, row);
+                        });
+                    }
+
+                    const originalChildren = Array.from(row.children);
+                    originalChildren.forEach(child => {
+                        row.appendChild(child.cloneNode(true));
+                    });
+                    
+                    const baseSpeed = 80;
+                    const randomSpeed = baseSpeed + Math.random() * 40 - 20;
+                    const duration = (row.scrollWidth / 2) / randomSpeed;
+                    
+                    const direction = 'normal';
+                    
+                    row.style.animationDuration = `${duration}s`;
+                    row.style.animationDirection = direction;
+                });
+            }, 0);
+        }
+
+        function updateView() {
+            if (currentMode === 'pagination') {
+                scrollContainer.style.height = 'auto';
+                paginationControls.style.display = 'flex';
+                btnPagination.classList.add('active');
+                btnAutoscroll.classList.remove('active');
+                displayPage(1);
+            } else { // autoscroll
+                paginationControls.style.display = 'none';
+                scrollContainer.style.height = SCROLL_CONTAINER_HEIGHT;
+                btnAutoscroll.classList.add('active');
+                btnPagination.classList.remove('active');
+                initAutoScroll();
+                updateIframeHeight();
+            }
+        }
+        
+        btnPagination.addEventListener('click', () => {
+            currentMode = 'pagination';
+            updateView();
+        });
+
+        btnAutoscroll.addEventListener('click', () => {
+            currentMode = 'autoscroll';
+            updateView();
+        });
+
         function updateIframeHeight() {
             if (window.parent) {
                 requestAnimationFrame(() => {
                     const totalHeight = document.body.scrollHeight;
-                    window.parent.postMessage({
-                        type: 'iframeHeight',
-                        height: totalHeight
-                    }, '*');
+                    window.parent.postMessage({ type: 'iframeHeight', height: totalHeight }, '*');
                 });
             }
         }
         
-        // 页面加载完成后执行
         window.addEventListener('DOMContentLoaded', () => {
-            displayPage(1); // 默认显示第一页
+            updateView();
+
+            // --- 【新增】鼠标跟随提示框的逻辑 ---
+            const tooltip = document.createElement('div');
+            tooltip.id = 'comment-tooltip';
+            document.body.appendChild(tooltip);
+
+            commentsList.addEventListener('mousemove', (event) => {
+                const commentItem = event.target.closest('.comment-item');
+                if (commentItem && tooltip.style.display === 'block') {
+                    // +15 像素的偏移，防止提示框闪烁
+                    tooltip.style.left = `${event.pageX + 15}px`;
+                    tooltip.style.top = `${event.pageY + 15}px`;
+                }
+            });
+
+            commentsList.addEventListener('mouseover', (event) => {
+                const commentItem = event.target.closest('.comment-item');
+                if (commentItem) {
+                    const author = commentItem.dataset.author;
+                    const date = commentItem.dataset.date;
+                    
+                    tooltip.innerHTML = `
+                        <span class="tooltip-author">${author}</span>
+                        <span class="tooltip-date">${date}</span>
+                    `;
+                    tooltip.style.display = 'block';
+                }
+            });
+
+            commentsList.addEventListener('mouseout', (event) => {
+                const commentItem = event.target.closest('.comment-item');
+                if (commentItem) {
+                    tooltip.style.display = 'none';
+                }
+            });
         });
 
     </script>
 
 </body>
 </html>
+
